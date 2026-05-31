@@ -295,8 +295,8 @@
                 // Authenticate User
                 await signInWithEmailAndPassword(auth, email, pass);
 
-                // Target collection 'iframe' (singular)
-                const iframeCollectionRef = collection(db, "iframe");
+                // This version targets the 'iframes' (plural) collection
+                const iframeCollectionRef = collection(db, "iframes");
                 const q = query(iframeCollectionRef, limit(1));
                 const querySnapshot = await getDocs(q);
 
