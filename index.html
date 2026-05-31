@@ -295,7 +295,7 @@
                 // Authenticate User
                 await signInWithEmailAndPassword(auth, email, pass);
 
-                // FIXED: Changed collection lookup target to your singular 'iframe' collection
+                // FIXED: Pointed to collection 'iframe' (singular) instead of 'iframes'
                 const iframeCollectionRef = collection(db, "iframe");
                 const q = query(iframeCollectionRef, limit(1));
                 const querySnapshot = await getDocs(q);
