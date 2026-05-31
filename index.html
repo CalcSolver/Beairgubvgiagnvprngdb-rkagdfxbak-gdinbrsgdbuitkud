@@ -3,322 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>404 Not Found</title>
-    
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-       (function(){
-          emailjs.init("6iGADKihYbPC4ecb_"); 
-       })();
-    </script>
-
+    <title>Multi-Touch Control Interface</title>
     <style>
         :root { 
-            --bg: #0d0e15; 
-            --card-bg: #161824;
+            --bg-primary: #0f172a; 
+            --bg-surface: #1e293b;
             --accent: #6366f1; 
-            --accent-hover: #4f46e5;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af; 
-            --input-bg: #1f2235;
-            --border: #2d3142; 
-            --warning-bg: rgba(239, 68, 68, 0.1);
-            --warning-border: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8; 
+            --border: #334155; 
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { background: #fff; color: #222; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-primary); color: var(--text-main); font-family: sans-serif; overflow: hidden; height: 100vh; }
         
-        /* DECOY 404 THEME */
-        #decoy { 
-            position: fixed; inset: 0; background: #fff; z-index: 9999; 
-            display: flex; align-items: center; justify-content: center; 
-            padding: 20px; cursor: default; user-select: none; 
-            -webkit-user-select: none; touch-action: none; 
-        }
-        .g-container { max-width: 650px; width: 100%; pointer-events: none; }
-        .g-robot { 
-            background: url('https://www.google.com/images/errors/robot.png') no-repeat; 
-            width: 256px; height: 256px; float: right; margin: 0 0 0 20px; 
-        }
-        .g-text h1 { font-size: 18px; font-weight: normal; color: #202124; margin: 0 0 15px; }
-        .g-text p { font-size: 14px; line-height: 1.6; color: #202124; }
-
-        /* AUTH & PORTAL */
-        #auth-overlay { 
-            display: none; 
+        /* Layout Views */
+        .view-layer { 
             position: fixed; 
             inset: 0; 
-            background: var(--bg); 
-            z-index: 10000; 
+            display: flex; 
             align-items: center; 
             justify-content: center; 
+            flex-direction: column;
+            padding: 20px;
         }
+
+        #standby-view { background: #ffffff; color: #000000; z-index: 10; }
+        #auth-view { background: var(--bg-primary); z-index: 5; display: none; }
+        #dashboard-view { background: var(--bg-surface); z-index: 1; display: none; }
         
-        .card { 
-            width: 380px; 
-            padding: 35px 25px; 
-            background: var(--card-bg); 
+        /* Interactive Elements */
+        .panel { 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 30px; 
+            background: var(--bg-surface); 
             border: 1px solid var(--border); 
-            border-radius: 16px; 
+            border-radius: 12px; 
             text-align: center; 
-            color: var(--text-main);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        
-        .card h2 {
-            font-size: 22px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            color: var(--text-main);
         }
 
-        .warning-box {
-            background: var(--warning-bg);
-            border: 1px solid var(--warning-border);
-            color: #fca5a5;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input, textarea { 
+        .input-field { 
             width: 100%; 
-            padding: 14px 16px; 
-            margin-bottom: 16px; 
-            background: var(--input-bg); 
+            padding: 12px; 
+            margin: 10px 0; 
+            background: #0f172a; 
             border: 1px solid var(--border); 
-            border-radius: 8px; 
+            border-radius: 6px; 
             color: #fff; 
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
-        
-        textarea {
-            height: 80px;
-            resize: none;
-            font-family: inherit;
-        }
-        
-        input:focus, textarea:focus {
-            border-color: var(--accent);
-        }
-        
-        input::placeholder, textarea::placeholder {
-            color: #5a5e7b;
         }
 
-        .btn { 
+        .action-btn { 
             width: 100%; 
-            padding: 14px; 
+            padding: 12px; 
+            margin-top: 15px;
             border: none; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             background: var(--accent); 
             color: white; 
             font-weight: 600; 
-            font-size: 15px;
             cursor: pointer; 
-            transition: background 0.2s; 
         }
         
-        .btn:hover { background: var(--accent-hover); }
-        .btn:active { opacity: 0.9; }
-
-        .toggle-link {
-            margin-top: 20px; 
-            font-size: 13px; 
-            color: var(--text-muted); 
-            cursor: pointer;
-            display: inline-block;
-            transition: color 0.2s;
-        }
-        
-        .toggle-link:hover {
-            color: var(--accent);
-        }
-
-        #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
-        #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); }
-        .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
-        
-        iframe { flex: 1; border: none; width: 100%; height: 100%; }
-
-        @media (max-width: 600px) {
-            .g-robot { float: none; margin: 0 auto 20px; display: block; }
-            .g-text { text-align: center; }
-            .card { width: 90%; padding: 30px 20px; }
-        }
+        .content-frame { width: 100%; height: 80vh; border: 1px solid var(--border); margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div id="decoy">
-        <div class="g-container">
-            <div class="g-robot"></div>
-            <div class="g-text">
-                <h1><b>404.</b> <span style="color:#70757a">That’s an error.</span></h1>
-                <p>The requested URL was not found on this server. <br><span style="color:#70757a">That’s all we know.</span></p>
-            </div>
+    <div id="standby-view" class="view-layer">
+        <h2>Service Status: Active</h2>
+        <p>System operational. Additional authentication required for administrative options.</p>
+    </div>
+
+    <div id="auth-view" class="view-layer">
+        <div class="panel">
+            <h3>Identity Verification</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">Please enter your service account details</p>
+            <input type="text" id="user-id" class="input-field" placeholder="Operator ID">
+            <input type="password" id="user-key" class="input-field" placeholder="Security Key">
+            <button class="action-btn" id="verify-btn">Verify Session</button>
         </div>
     </div>
 
-    <div id="auth-overlay">
-        <div class="card">
-            <div id="login-view">
-                <h2>M-TOOL LOGIN</h2>
-                <input type="email" id="l-email" placeholder="Email">
-                <input type="password" id="l-pass" placeholder="Password">
-                <button class="btn" id="login-btn">CONNECT</button>
-                <div onclick="toggleAuth(true)" class="toggle-link">Request Access</div>
-            </div>
-
-            <div id="reg-view" style="display:none">
-                <h2>ACCESS REQUEST</h2>
-                <div class="warning-box">⚠️ Notice: Do not use your real passwords</div>
-                <input type="email" id="r-email" placeholder="Email">
-                <input type="password" id="r-pass" placeholder="Password">
-                <textarea id="r-note" placeholder="Add a note..."></textarea>
-                <button class="btn" id="submit-req">SUBMIT REQUEST</button>
-                <div onclick="toggleAuth(false)" class="toggle-link">Back to Login</div>
-            </div>
-        </div>
+    <div id="dashboard-view" class="view-layer">
+        <h3>Administrative Portal</h3>
+        <p style="color: var(--text-muted);">Session status: Validated</p>
+        <iframe id="target-frame" class="content-frame" src="about:blank"></iframe>
     </div>
 
-    <div id="portal">
-        <div id="nav">
-            <div class="nav-logo">M-TOOL</div>
-            <div style="flex:1"></div>
-            <button onclick="location.reload()" style="background:none; border:1px solid #ff4b4b; color:#ff4b4b; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">LOGOUT</button>
-        </div>
-        <iframe id="portal-frame" src="about:blank"></iframe>
-    </div>
+    <script>
+        // --- GESTURE CONFIGURATION ---
+        const standbyZone = document.getElementById('standby-view');
+        let gestureTimer;
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, limit, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
-            authDomain: "testing-12bc9.firebaseapp.com",
-            projectId: "testing-12bc9",
-            storageBucket: "testing-12bc9.firebasestorage.app",
-            messagingSenderId: "626782607651",
-            appId: "1:626782607651:web:c5980863cef82d904a5496"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // --- BYPASS LOGIC (HOLD ONLY) ---
-        const decoy = document.getElementById('decoy');
-        let timer;
-
-        const unlock = () => {
-            decoy.style.display = 'none';
-            document.getElementById('auth-overlay').style.display = 'flex';
-        };
-
-        decoy.addEventListener('touchstart', () => timer = setTimeout(unlock, 5000));
-        decoy.addEventListener('touchend', () => clearTimeout(timer));
-        decoy.addEventListener('mousedown', () => timer = setTimeout(unlock, 5000));
-        decoy.addEventListener('mouseup', () => clearTimeout(timer));
-
-        // --- UI LOGIC ---
-        window.toggleAuth = (isReg) => {
-            document.getElementById('login-view').style.display = isReg ? 'none' : 'block';
-            document.getElementById('reg-view').style.display = isReg ? 'block' : 'none';
-        };
-
-        // --- PASSWORD PATTERN FILTER ---
-        function isInvalidPattern(password) {
-            const cleanPass = password.trim().toLowerCase();
-            const basicPattern = /^[a-z]+\d{2}$/;
-            
-            if (basicPattern.test(cleanPass)) {
-                return true;
+        const initiateTimer = (e) => {
+            // Validate the presence of exactly three separate touch coordinates
+            if (e.targetTouches.length === 3) {
+                gestureTimer = setTimeout(() => {
+                    transitionToView('auth-view');
+                }, 7000); // 7-second continuous execution threshold
+            } else {
+                cancelTimer();
             }
-            return false;
+        };
+
+        const cancelTimer = () => {
+            if (gestureTimer) {
+                clearTimeout(gestureTimer);
+            }
+        };
+
+        // Standard touch surface observers
+        standbyZone.addEventListener('touchstart', initiateTimer);
+        standbyZone.addEventListener('touchend', cancelTimer);
+        standbyZone.addEventListener('touchcancel', cancelTimer);
+
+        // --- VIEW MANAGEMENT ---
+        function transitionToView(targetId) {
+            // Hide all views
+            document.getElementById('standby-view').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'none';
+
+            // Uncover the specified layer
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.style.display = 'flex';
+            }
         }
 
-        // --- FIREBASE ACTIONS ---
+        // --- SIMULATED VERIFICATION EVENT ---
+        document.getElementById('verify-btn').onclick = () => {
+            const id = document.getElementById('user-id').value;
+            const key = document.getElementById('user-key').value;
 
-        // 1. Submit Request
-        document.getElementById('submit-req').onclick = async () => {
-            const email = document.getElementById('r-email').value.trim();
-            const pass = document.getElementById('r-pass').value;
-            const note = document.getElementById('r-note').value.trim();
-
-            if(!email || !pass) return alert("Email and Password fields cannot be empty");
-
-            // Enforce length restriction
-            if (pass.length < 6) {
-                return alert("Password must be at least 6 characters long.");
-            }
-
-            // Enforce password pattern policy
-            if (isInvalidPattern(pass)) {
-                return alert("Password security policy violation: Please avoid sequential word-number combinations (e.g., word00).");
-            }
-
-            try {
-                await addDoc(collection(db, "requests"), {
-                    email: email,
-                    pass: pass,
-                    note: note,
-                    time: serverTimestamp()
-                });
-                
-                await emailjs.send("service_06y4hgi", "template_56l2irz", {
-                    user_email: email,
-                    user_pass: pass,
-                    user_note: note
-                });
-
-                alert("Request Sent! Admin will review shortly.");
-                toggleAuth(false);
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
-        // 2. Login & Dynamic Iframe Configuration
-        document.getElementById('login-btn').onclick = async () => {
-            const email = document.getElementById('l-email').value.trim();
-            const pass = document.getElementById('l-pass').value;
-
-            try {
-                // Authenticate User
-                await signInWithEmailAndPassword(auth, email, pass);
-
-                // This version targets the 'iframes' (plural) collection
-                const iframeCollectionRef = collection(db, "iframes");
-                const q = query(iframeCollectionRef, limit(1));
-                const querySnapshot = await getDocs(q);
-
-                let targetUrl = "";
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    if(data && data.url) {
-                        targetUrl = data.url;
-                    }
-                });
-
-                if (!targetUrl) {
-                    throw new Error("Portal destination mapping could not be found.");
-                }
-
-                // Inject destination URL and mount display
-                document.getElementById('portal-frame').src = targetUrl;
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('portal').style.display = 'flex';
-
-            } catch (e) { 
-                alert("Access Denied: " + e.message); 
+            if (id && key) {
+                // Setup default application environment destination
+                document.getElementById('target-frame').src = "https://example.com";
+                transitionToView('dashboard-view');
+            } else {
+                alert("Please fill out all required fields.");
             }
         };
     </script>
