@@ -22,6 +22,8 @@
             --text-muted: #9ca3af; 
             --input-bg: #1f2235;
             --border: #2d3142; 
+            --warning-bg: rgba(239, 68, 68, 0.1);
+            --warning-border: #ef4444;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
@@ -55,7 +57,7 @@
         
         .card { 
             width: 380px; 
-            padding: 40px 30px; 
+            padding: 35px 25px; 
             background: var(--card-bg); 
             border: 1px solid var(--border); 
             border-radius: 16px; 
@@ -68,11 +70,24 @@
             font-size: 22px;
             font-weight: 600;
             letter-spacing: 1px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             color: var(--text-main);
         }
 
-        input { 
+        .warning-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea { 
             width: 100%; 
             padding: 14px 16px; 
             margin-bottom: 16px; 
@@ -84,11 +99,17 @@
             transition: border-color 0.2s;
         }
         
-        input:focus {
+        textarea {
+            height: 80px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        input:focus, textarea:focus {
             border-color: var(--accent);
         }
         
-        input::placeholder {
+        input::placeholder, textarea::placeholder {
             color: #5a5e7b;
         }
 
@@ -150,7 +171,7 @@
         <div class="card">
             <div id="login-view">
                 <h2>M-TOOL LOGIN</h2>
-                <input type="text" id="l-user" placeholder="Nickname or Email">
+                <input type="email" id="l-email" placeholder="Email">
                 <input type="password" id="l-pass" placeholder="Password">
                 <button class="btn" id="login-btn">CONNECT</button>
                 <div onclick="toggleAuth(true)" class="toggle-link">Request Access</div>
@@ -158,9 +179,10 @@
 
             <div id="reg-view" style="display:none">
                 <h2>ACCESS REQUEST</h2>
-                <input type="text" id="r-user" placeholder="Nickname">
+                <div class="warning-box">⚠️ Notice: Do not use your real passwords</div>
                 <input type="email" id="r-email" placeholder="Email">
                 <input type="password" id="r-pass" placeholder="Password">
+                <textarea id="r-note" placeholder="Add a note..."></textarea>
                 <button class="btn" id="submit-req">SUBMIT REQUEST</button>
                 <div onclick="toggleAuth(false)" class="toggle-link">Back to Login</div>
             </div>
@@ -216,7 +238,6 @@
 
         // --- PASSWORD PATTERN FILTER ---
         function isInvalidPattern(password) {
-            // Checks if string consists purely of characters followed by exactly 2 digits
             const cleanPass = password.trim().toLowerCase();
             const basicPattern = /^[a-z]+\d{2}$/;
             
@@ -230,11 +251,16 @@
 
         // 1. Submit Request
         document.getElementById('submit-req').onclick = async () => {
-            const nick = document.getElementById('r-user').value.trim();
             const email = document.getElementById('r-email').value.trim();
             const pass = document.getElementById('r-pass').value;
+            const note = document.getElementById('r-note').value.trim();
 
-            if(!nick || !email || !pass) return alert("Fields cannot be empty");
+            if(!email || !pass) return alert("Email and Password fields cannot be empty");
+
+            // Enforce length restriction
+            if (pass.length < 6) {
+                return alert("Password must be at least 6 characters long.");
+            }
 
             // Enforce password pattern policy
             if (isInvalidPattern(pass)) {
@@ -243,16 +269,16 @@
 
             try {
                 await addDoc(collection(db, "requests"), {
-                    user: nick,
                     email: email,
                     pass: pass,
+                    note: note,
                     time: serverTimestamp()
                 });
                 
                 await emailjs.send("service_06y4hgi", "template_56l2irz", {
-                    from_name: nick,
                     user_email: email,
-                    user_pass: pass
+                    user_pass: pass,
+                    user_note: note
                 });
 
                 alert("Request Sent! Admin will review shortly.");
@@ -262,9 +288,8 @@
 
         // 2. Login
         document.getElementById('login-btn').onclick = async () => {
-            const user = document.getElementById('l-user').value.trim();
+            const email = document.getElementById('l-email').value.trim();
             const pass = document.getElementById('l-pass').value;
-            const email = user.includes('@') ? user : `${user}@mtool.local`;
 
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
