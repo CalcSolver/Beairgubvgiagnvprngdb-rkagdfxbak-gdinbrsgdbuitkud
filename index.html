@@ -142,11 +142,11 @@
             color: var(--accent);
         }
 
-        /* PORTAL NAV */
         #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
         #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); gap: 15px; }
         .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
         
+        /* Dropdown selector styles */
         .portal-select {
             width: auto;
             max-width: 220px;
@@ -237,7 +237,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- BYPASS LOGIC ---
+        // --- BYPASS LOGIC (HOLD ONLY) ---
         const decoy = document.getElementById('decoy');
         let timer;
 
@@ -301,38 +301,43 @@
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        // 2. Login
+        // 2. Login & Multi-Iframe Dynamic Switcher Loading
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('l-email').value.trim();
             const pass = document.getElementById('l-pass').value;
 
             try {
+                // Authenticate User
                 await signInWithEmailAndPassword(auth, email, pass);
 
-                // FIXED: Changed collection lookup target to "iframe" (singular)
+                // Target collection changed back to singular 'iframe'
                 const querySnapshot = await getDocs(collection(db, "iframe"));
                 const switcher = document.getElementById('iframe-switcher');
                 
+                // Clear the loader option text
                 switcher.innerHTML = "";
 
                 let count = 0;
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    if (data && data.url) {
+                    if(data && data.url) {
                         count++;
                         const option = document.createElement('option');
                         option.value = data.url;
+                        // Uses custom name field if available, falls back to numeric tracking
                         option.textContent = data.name ? data.name : `View ${count}`;
                         switcher.appendChild(option);
                     }
                 });
 
                 if (count === 0) {
-                    throw new Error("No destinations configured in the database.");
+                    throw new Error("No active destination links configured inside the database.");
                 }
 
+                // Default viewport loading path configuration
                 document.getElementById('portal-frame').src = switcher.options[0].value;
                 
+                // Watch configuration element update requests
                 switcher.onchange = (e) => {
                     document.getElementById('portal-frame').src = e.target.value;
                 };
