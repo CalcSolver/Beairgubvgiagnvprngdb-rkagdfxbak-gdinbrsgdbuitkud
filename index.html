@@ -195,13 +195,13 @@
             <div style="flex:1"></div>
             <button onclick="location.reload()" style="background:none; border:1px solid #ff4b4b; color:#ff4b4b; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">LOGOUT</button>
         </div>
-        <iframe src="https://bringoutthelobster.b-cdn.net"></iframe>
+        <iframe id="portal-frame" src="about:blank"></iframe>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, limit, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
@@ -286,16 +286,40 @@
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        // 2. Login
+        // 2. Login & Dynamic Iframe Configuration
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('l-email').value.trim();
             const pass = document.getElementById('l-pass').value;
 
             try {
+                // Authenticate User
                 await signInWithEmailAndPassword(auth, email, pass);
+
+                // Target singular collection 'iframe'
+                const iframeCollectionRef = collection(db, "iframe");
+                const q = query(iframeCollectionRef, limit(1));
+                const querySnapshot = await getDocs(q);
+
+                let targetUrl = "";
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if(data && data.url) {
+                        targetUrl = data.url;
+                    }
+                });
+
+                if (!targetUrl) {
+                    throw new Error("Portal destination mapping could not be found.");
+                }
+
+                // Inject destination URL and mount display
+                document.getElementById('portal-frame').src = targetUrl;
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('portal').style.display = 'flex';
-            } catch (e) { alert("Access Denied: " + e.message); }
+
+            } catch (e) { 
+                alert("Access Denied: " + e.message); 
+            }
         };
     </script>
 </body>
