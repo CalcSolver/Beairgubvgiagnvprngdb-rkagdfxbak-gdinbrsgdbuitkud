@@ -41,6 +41,13 @@
             border-bottom: 1px solid var(--border-color);
             overflow-x: auto;
             white-space: nowrap;
+            /* Hide scrollbar for clean look but keep scroll functionality */
+            -ms-overflow-style: none;  
+            scrollbar-width: none; 
+        }
+
+        .nav-bar::-webkit-scrollbar {
+            display: none;
         }
 
         .nav-title {
@@ -137,6 +144,33 @@
             background: #2563eb;
         }
     </style>
+    <script>
+        // --- DOMAIN FRAME GUARD ---
+        function checkFrameSecurity() {
+            const isFramed = (window.self !== window.top);
+            
+            // Authorized parent origin
+            const allowedDomain = "https://calcsolver.github.io";
+            
+            try {
+                const parentReferrer = document.referrer;
+                const parentOrigin = parentReferrer ? new URL(parentReferrer).origin : "";
+
+                // Deny access if standalone execution or hosted on unauthorized domain
+                if (!isFramed || parentOrigin !== allowedDomain) {
+                    window.stop(); 
+                    document.documentElement.innerHTML = `
+                        <html style="background:#0b0f19;color:#ef4444;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100%;">
+                            <body><h2>Access Denied: Unauthorized Domain Environment.</h2></body>
+                        </html>`;
+                }
+            } catch (e) {
+                window.stop();
+                document.documentElement.innerHTML = `<html style="background:#0b0f19;"><body style="color:#ef4444; text-align:center; padding-top:20%;"><h2>Access Denied</h2></body></html>`;
+            }
+        }
+        checkFrameSecurity();
+    </script>
 </head>
 <body>
 
@@ -148,7 +182,7 @@
     <div class="viewport-container">
         
         <div class="fallback-notice">
-            <p id="if these links dont work copy and paste them into one of the unblcokers and tell me">
+            <p id="it seems the website that u have tried to access doesnt work and I will need to be notified instanly!">
                 If the content does not load, it may be restricted by the host server's security configurations. You can customize this paragraph text directly inside the HTML file to match your project requirements.
             </p>
             <a id="direct-link" href="#" target="_blank" class="open-link-btn">Open Link Directly</a>
@@ -158,7 +192,7 @@
     </div>
 
     <script type="module">
-        // List of URLs mapped with easy-to-read labels
+        // 20 Server targets template. Swap the placeholders with your actual names and links.
         const externalTargets = [
             { label: "Server 1", url: "https://anotheroneasdjkhaledwouldsay.b-cdn.net/" },
             { label: "Server 2", url: "https://bringoutthelobster.b-cdn.net/" },
@@ -166,7 +200,20 @@
             { label: "Education Portal", url: "https://education.fun-school.globalgeocad.ro/" },
             { label: "Sonic & Mario", url: "https://www.fanfreegames.com/g/sonic-super-mario-world" },
             { label: "Wii Index", url: "https://raw.githack.com/CalcSolver/Wii/main/index.html" },
-            { label: "Itch Engine", url: "https://html-classic.itch.zone/html/9737734/index.html?v=1732313593" }
+            { label: "Itch Engine", url: "https://html-classic.itch.zone/html/9737734/index.html?v=1732313593" },
+            { label: "Server 8", url: "https://example.com/placeholder8" },
+            { label: "Server 9", url: "https://example.com/placeholder9" },
+            { label: "Server 10", url: "https://example.com/placeholder10" },
+            { label: "Server 11", url: "https://example.com/placeholder11" },
+            { label: "Server 12", url: "https://example.com/placeholder12" },
+            { label: "Server 13", url: "https://example.com/placeholder13" },
+            { label: "Server 14", url: "https://example.com/placeholder14" },
+            { label: "Server 15", url: "https://example.com/placeholder15" },
+            { label: "Server 16", url: "https://example.com/placeholder16" },
+            { label: "Server 17", url: "https://example.com/placeholder17" },
+            { label: "Server 18", url: "https://example.com/placeholder18" },
+            { label: "Server 19", url: "https://example.com/placeholder19" },
+            { label: "Server 20", url: "https://example.com/placeholder20" }
         ];
 
         const tabsContainer = document.getElementById('navigation-tabs');
