@@ -67,89 +67,7 @@
             margin-top: 10px;
         }
 
-        /* Auth Panel Styles */
-        #auth-screen {
-            display: none;
-            flex-direction: column;
-            background: #111827;
-            padding: 30px;
-            border-radius: 8px;
-            border: 1px solid #1f2937;
-            width: 100%;
-            max-width: 360px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-
-        #auth-screen h2 {
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: #9ca3af;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            background: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 6px;
-            color: #ffffff;
-            font-size: 1rem;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
-
-        .auth-btn {
-            background: #3b82f6;
-            color: #ffffff;
-            border: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 10px;
-            width: 100%;
-        }
-
-        .auth-btn:hover {
-            background: #2563eb;
-        }
-
-        .toggle-mode {
-            background: none;
-            border: none;
-            color: #3b82f6;
-            font-size: 0.85rem;
-            cursor: pointer;
-            margin-top: 15px;
-            text-align: center;
-            text-decoration: underline;
-            width: 100%;
-        }
-
-        #auth-error {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 10px;
-            text-align: center;
-            min-height: 20px;
-        }
-
-        /* Hidden Content Screen with Tabbed UI */
+        /* Hidden Content Screen */
         #content-screen {
             position: absolute;
             top: 0;
@@ -158,9 +76,12 @@
             height: 100%;
             display: none;
             flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.8s ease;
             background: #0b0f19;
         }
 
+        /* Dynamic Top Bar */
         .nav-bar {
             display: flex;
             justify-content: center;
@@ -212,32 +133,16 @@
         }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
     <div id="error-screen">
         <h1 id="error-code">404</h1>
         <p id="error-message">The page you are looking for does not exist.</p>
     </div>
 
-    <div id="auth-screen">
-        <h2 id="auth-title">System Authentication</h2>
-        <div class="input-group">
-            <label for="email">User Registry Email</label>
-            <input type="email" id="email" autocomplete="off">
-        </div>
-        <div class="input-group">
-            <label for="password">Security Token</label>
-            <input type="password" id="password">
-        </div>
-        <button id="auth-submit-btn" class="auth-btn">Verify Identity</button>
-        <button id="auth-toggle-btn" class="toggle-mode">Need an account? Sign Up</button>
-        <div id="auth-error"></div>
-    </div>
-
     <div id="content-screen">
-        <div class="nav-bar" id="dynamic-nav">
-            <button class="nav-btn active" id="primary-tab">Console Display</button>
-        </div>
+        <div class="nav-bar" id="dynamic-nav"></div>
+        
         <div class="iframe-container">
             <iframe id="secret-iframe" src="" allowfullscreen></iframe>
         </div>
@@ -245,10 +150,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase configuration parameters
+        // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
@@ -259,114 +163,66 @@
             measurementId: "G-D8D71RB750"
         };
 
-        // Initialize Firebase services
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
 
-        // UI Selectors
+        // DOM Elements
         const errorScreen = document.getElementById('error-screen');
         const errorCode = document.getElementById('error-code');
-        const authScreen = document.getElementById('auth-screen');
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
-        const primaryTab = document.getElementById('primary-tab');
-        
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const authToggleBtn = document.getElementById('auth-toggle-btn');
-        const authTitle = document.getElementById('auth-title');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const authError = document.getElementById('auth-error');
+        const dynamicNav = document.getElementById('dynamic-nav');
 
+        let activeDocId = null; // Track which button is currently selected
         let holdTimer;
         const HOLD_DURATION = 5000; 
-        let unsubscribeDoc = null; 
-        let isLoginMode = true; 
 
-        // Prevent layout inspection shortcuts
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'F12') e.preventDefault();
-            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
-        });
+        // Listen for updates on the entire "iframe" collection
+        onSnapshot(collection(db, "iframe"), (querySnapshot) => {
+            // Clear the existing navbar buttons to rebuild fresh
+            dynamicNav.innerHTML = "";
+            
+            let isFirst = true;
 
-        // Toggle interface state between Login and Sign Up modes
-        authToggleBtn.addEventListener('click', () => {
-            isLoginMode = !isLoginMode;
-            if (isLoginMode) {
-                authTitle.textContent = "System Authentication";
-                authSubmitBtn.textContent = "Verify Identity";
-                authToggleBtn.textContent = "Need an account? Sign Up";
-            } else {
-                authTitle.textContent = "Register Account";
-                authSubmitBtn.textContent = "Create Profile";
-                authToggleBtn.textContent = "Already registered? Sign In";
-            }
-            authError.textContent = "";
-        });
+            querySnapshot.forEach((doc) => {
+                const docId = doc.id; // Document Name (e.g., "Google", "Wiki")
+                const data = doc.data();
+                const url = data.url || "";
 
-        // Process active session states
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                authScreen.style.display = 'none';
-                errorScreen.style.display = 'none';
-                contentScreen.style.display = 'flex';
+                // Create a dynamic button element
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.textContent = docId;
+                btn.dataset.url = url;
+                btn.dataset.id = docId;
 
-                // Establish clean read pipeline to your designated document ID
-                unsubscribeDoc = onSnapshot(doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV"), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        if (data.url && secretIframe.src !== data.url) {
-                            secretIframe.src = data.url;
-                            // Optionally set the tab text to match the document name if preferred
-                            primaryTab.textContent = docSnap.id;
-                        }
-                    }
-                }, (error) => {
-                    console.error("Pipeline disconnected:", error);
+                // Handle active state recovery or initial setup
+                if ((activeDocId === null && isFirst) || activeDocId === docId) {
+                    btn.classList.add('active');
+                    secretIframe.src = url;
+                    activeDocId = docId;
+                    isFirst = false;
+                }
+
+                // Click event to swap URLs
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    secretIframe.src = url;
+                    activeDocId = docId;
                 });
-            } else {
-                if (unsubscribeDoc) {
-                    unsubscribeDoc();
-                    unsubscribeDoc = null;
-                }
-                secretIframe.src = "";
-            }
+
+                dynamicNav.appendChild(btn);
+            });
         });
 
-        // Action submission handler
-        authSubmitBtn.addEventListener('click', async () => {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            authError.textContent = "";
-
-            if (!email || !password) {
-                authError.textContent = "All fields required.";
-                return;
-            }
-
-            try {
-                if (isLoginMode) {
-                    await signInWithEmailAndPassword(auth, email, password);
-                } else {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                }
-            } catch (err) {
-                if (isLoginMode) {
-                    authError.textContent = "Invalid credential token verified.";
-                } else {
-                    authError.textContent = err.message.replace("Firebase: ", "");
-                }
-            }
-        });
-
-        // --- Interaction Hold Listeners ---
+        // --- Press & Hold Activation Logic ---
         function startHold(e) {
             if (e.touches && e.touches.length > 1) return;
             errorCode.classList.add('holding');
             holdTimer = setTimeout(() => {
-                revealAuthGateway();
+                revealSecretContent();
             }, HOLD_DURATION);
         }
 
@@ -380,17 +236,20 @@
         errorCode.addEventListener('touchstart', startHold, { passive: true });
         window.addEventListener('touchend', cancelHold);
 
-        function revealAuthGateway() {
+        // --- Transition ---
+        function revealSecretContent() {
             errorCode.removeEventListener('mousedown', startHold);
             errorCode.removeEventListener('touchstart', startHold);
             
-            if (auth.currentUser) {
+            errorScreen.classList.add('hidden');
+            
+            setTimeout(() => {
                 errorScreen.style.display = 'none';
                 contentScreen.style.display = 'flex';
-            } else {
-                errorScreen.style.display = 'none';
-                authScreen.style.display = 'flex';
-            }
+                setTimeout(() => {
+                    contentScreen.style.opacity = '1';
+                }, 50);
+            }, 500); 
         }
     </script>
 </body>
