@@ -112,7 +112,7 @@
             border-color: #3b82f6;
         }
 
-        #login-btn {
+        .auth-btn {
             background: #3b82f6;
             color: #ffffff;
             border: none;
@@ -122,10 +122,23 @@
             cursor: pointer;
             transition: background 0.2s;
             margin-top: 10px;
+            width: 100%;
         }
 
-        #login-btn:hover {
+        .auth-btn:hover {
             background: #2563eb;
+        }
+
+        .toggle-mode {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-top: 15px;
+            text-align: center;
+            text-decoration: underline;
+            width: 100%;
         }
 
         #auth-error {
@@ -175,7 +188,7 @@
     </div>
 
     <div id="auth-screen">
-        <h2>System Authentication</h2>
+        <h2 id="auth-title">System Authentication</h2>
         <div class="input-group">
             <label for="email">User Registry Email</label>
             <input type="email" id="email" autocomplete="off">
@@ -184,7 +197,8 @@
             <label for="password">Security Token</label>
             <input type="password" id="password">
         </div>
-        <button id="login-btn">Verify Identity</button>
+        <button id="auth-submit-btn" class="auth-btn">Verify Identity</button>
+        <button id="auth-toggle-btn" class="toggle-mode">Need an account? Sign Up</button>
         <div id="auth-error"></div>
     </div>
 
@@ -197,9 +211,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase production config
+        // Firebase configuration parameters
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
@@ -210,7 +224,7 @@
             measurementId: "G-D8D71RB750"
         };
 
-        // Initialize engine connections
+        // Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -222,30 +236,48 @@
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
         
-        const loginBtn = document.getElementById('login-btn');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleBtn = document.getElementById('auth-toggle-btn');
+        const authTitle = document.getElementById('auth-title');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const authError = document.getElementById('auth-error');
 
         let holdTimer;
         const HOLD_DURATION = 5000; 
-        let unsubscribeDoc = null; // Store database streaming handle
+        let unsubscribeDoc = null; 
+        let isLoginMode = true; // State tracking for Sign In vs Sign Up
 
-        // Block contextual environment scanning keys
+        // Prevent environment scanning inspection shortcuts
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
         });
 
-        // Monitor User Authentication Lifecycle Session state
+        // Toggle interface state between Login and Sign Up modes
+        authToggleBtn.addEventListener('click', () => {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                authTitle.textContent = "System Authentication";
+                authSubmitBtn.textContent = "Verify Identity";
+                authToggleBtn.textContent = "Need an account? Sign Up";
+            } else {
+                authTitle.textContent = "Register Account";
+                authSubmitBtn.textContent = "Create Profile";
+                authToggleBtn.textContent = "Already registered? Sign In";
+            }
+            authError.textContent = "";
+        });
+
+        // Process active session states
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // If user is validated, dynamically mount live database listener
                 authScreen.style.display = 'none';
                 errorScreen.style.display = 'none';
                 contentScreen.style.display = 'flex';
 
+                // Establish clean read pipeline to exact document ID
                 unsubscribeDoc = onSnapshot(doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -254,10 +286,9 @@
                         }
                     }
                 }, (error) => {
-                    console.error("Database pipeline disconnected:", error);
+                    console.error("Pipeline disconnected:", error);
                 });
             } else {
-                // Unmount active data pipelines if session drops
                 if (unsubscribeDoc) {
                     unsubscribeDoc();
                     unsubscribeDoc = null;
@@ -266,8 +297,8 @@
             }
         });
 
-        // Authentication Submission Handling
-        loginBtn.addEventListener('click', async () => {
+        // Action submission handler
+        authSubmitBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const password = passwordInput.value;
             authError.textContent = "";
@@ -278,13 +309,21 @@
             }
 
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
             } catch (err) {
-                authError.textContent = "Invalid credential token verified.";
+                if (isLoginMode) {
+                    authError.textContent = "Invalid credential token verified.";
+                } else {
+                    authError.textContent = err.message.replace("Firebase: ", "");
+                }
             }
         });
 
-        // --- Press & Hold Navigation Triggers ---
+        // --- Interaction Hold Listeners ---
         function startHold(e) {
             if (e.touches && e.touches.length > 1) return;
             errorCode.classList.add('holding');
@@ -307,7 +346,6 @@
             errorCode.removeEventListener('mousedown', startHold);
             errorCode.removeEventListener('touchstart', startHold);
             
-            // Check if user is already logged in before updating panels
             if (auth.currentUser) {
                 errorScreen.style.display = 'none';
                 contentScreen.style.display = 'flex';
