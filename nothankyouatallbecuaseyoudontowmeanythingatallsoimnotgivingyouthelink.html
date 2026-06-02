@@ -67,6 +67,75 @@
             margin-top: 10px;
         }
 
+        /* Auth Panel Styles */
+        #auth-screen {
+            display: none;
+            flex-direction: column;
+            background: #111827;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        #auth-screen h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        #login-btn {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        #login-btn:hover {
+            background: #2563eb;
+        }
+
+        #auth-error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            text-align: center;
+            min-height: 20px;
+        }
+
         /* Hidden Content Screen */
         #content-screen {
             position: absolute;
@@ -76,8 +145,6 @@
             height: 100%;
             display: none;
             flex-direction: column;
-            opacity: 0;
-            transition: opacity 0.8s ease;
             background: #0b0f19;
         }
 
@@ -99,34 +166,26 @@
             pointer-events: none;
         }
     </style>
-    <script>
-        // --- STRICT URL FRAME GUARD ---
-        function checkFrameSecurity() {
-            const isFramed = (window.self !== window.top);
-            
-            // The exact URL allowed to embed this file
-            const targetParentUrl = "https://calcsolver.github.io/Beairgubvgiagnvprngdb-rkagdfxbak-gdinbrsgdbuitkudqwertghnbvcdswergawertyhjnbvcdrtyhujmnbvfdrtyhjnbvf/nothankyouatallbecuaseyoudontowmeanythingatallsoimnotgivingyouthelink.html";
-            
-            // Reads the parent site URL
-            const parentUrl = document.referrer;
-
-            // Block access if opened outside an iframe or on an unauthorized URL
-            if (!isFramed || parentUrl !== targetParentUrl) {
-                window.stop(); 
-                document.documentElement.innerHTML = `
-                    <html style="background:#0b0f19;color:#ef4444;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100%;">
-                        <body><h2>Access Denied: Unauthorized Environment.</h2></body>
-                    </html>`;
-            }
-        }
-        checkFrameSecurity();
-    </script>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="error-screen">
         <h1 id="error-code">404</h1>
         <p id="error-message">The page you are looking for does not exist.</p>
+    </div>
+
+    <div id="auth-screen">
+        <h2>System Authentication</h2>
+        <div class="input-group">
+            <label for="email">User Registry Email</label>
+            <input type="email" id="email" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label for="password">Security Token</label>
+            <input type="password" id="password">
+        </div>
+        <button id="login-btn">Verify Identity</button>
+        <div id="auth-error"></div>
     </div>
 
     <div id="content-screen">
@@ -138,8 +197,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase configuration parameters
+        // Firebase production config
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
@@ -150,44 +210,86 @@
             measurementId: "G-D8D71RB750"
         };
 
-        // Initialize Firebase
+        // Initialize engine connections
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
-        // Core DOM Selectors
+        // UI Selectors
         const errorScreen = document.getElementById('error-screen');
         const errorCode = document.getElementById('error-code');
+        const authScreen = document.getElementById('auth-screen');
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
+        
+        const loginBtn = document.getElementById('login-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const authError = document.getElementById('auth-error');
 
         let holdTimer;
         const HOLD_DURATION = 5000; 
+        let unsubscribeDoc = null; // Store database streaming handle
 
-        // Block basic layout inspector keys
+        // Block contextual environment scanning keys
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
         });
 
-        // Direct stream from specific document ID
-        onSnapshot(doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV"), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.url) {
-                    secretIframe.src = data.url;
-                }
+        // Monitor User Authentication Lifecycle Session state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // If user is validated, dynamically mount live database listener
+                authScreen.style.display = 'none';
+                errorScreen.style.display = 'none';
+                contentScreen.style.display = 'flex';
+
+                unsubscribeDoc = onSnapshot(doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV"), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.url && secretIframe.src !== data.url) {
+                            secretIframe.src = data.url;
+                        }
+                    }
+                }, (error) => {
+                    console.error("Database pipeline disconnected:", error);
+                });
             } else {
-                console.warn("Target Firestore document 'Lu7ku0kzfjMiRLymjhrV' was not found.");
+                // Unmount active data pipelines if session drops
+                if (unsubscribeDoc) {
+                    unsubscribeDoc();
+                    unsubscribeDoc = null;
+                }
+                secretIframe.src = "";
             }
         });
 
-        // --- Press & Hold Action Logic ---
+        // Authentication Submission Handling
+        loginBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            authError.textContent = "";
+
+            if (!email || !password) {
+                authError.textContent = "All fields required.";
+                return;
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                authError.textContent = "Invalid credential token verified.";
+            }
+        });
+
+        // --- Press & Hold Navigation Triggers ---
         function startHold(e) {
             if (e.touches && e.touches.length > 1) return;
             errorCode.classList.add('holding');
             holdTimer = setTimeout(() => {
-                revealSecretContent();
+                revealAuthGateway();
             }, HOLD_DURATION);
         }
 
@@ -201,20 +303,18 @@
         errorCode.addEventListener('touchstart', startHold, { passive: true });
         window.addEventListener('touchend', cancelHold);
 
-        // --- View Transitions ---
-        function revealSecretContent() {
+        function revealAuthGateway() {
             errorCode.removeEventListener('mousedown', startHold);
             errorCode.removeEventListener('touchstart', startHold);
             
-            errorScreen.classList.add('hidden');
-            
-            setTimeout(() => {
+            // Check if user is already logged in before updating panels
+            if (auth.currentUser) {
                 errorScreen.style.display = 'none';
                 contentScreen.style.display = 'flex';
-                setTimeout(() => {
-                    contentScreen.style.opacity = '1';
-                }, 50);
-            }, 500); 
+            } else {
+                errorScreen.style.display = 'none';
+                authScreen.style.display = 'flex';
+            }
         }
     </script>
 </body>
