@@ -2,255 +2,325 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>404 Not Found</title>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("6iGADKihYbPC4ecb_"); 
+       })();
+    </script>
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        :root { 
+            --bg: #0d0e15; 
+            --card-bg: #161824;
+            --accent: #6366f1; 
+            --accent-hover: #4f46e5;
+            --text-main: #ffffff;
+            --text-muted: #9ca3af; 
+            --input-bg: #1f2235;
+            --border: #2d3142; 
+            --warning-bg: rgba(239, 68, 68, 0.1);
+            --warning-border: #ef4444;
         }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #0b0f19;
-            color: #f3f4f6;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body { background: #fff; color: #222; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        /* DECOY 404 THEME */
+        #decoy { 
+            position: fixed; inset: 0; background: #fff; z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 20px; cursor: default; user-select: none; 
+            -webkit-user-select: none; touch-action: none; 
         }
-
-        /* 404 Screen Styles */
-        #error-screen {
-            text-align: center;
-            user-select: none;
-            -webkit-user-select: none;
-            transition: opacity 0.5s ease;
+        .g-container { max-width: 650px; width: 100%; pointer-events: none; }
+        .g-robot { 
+            background: url('https://www.google.com/images/errors/robot.png') no-repeat; 
+            width: 256px; height: 256px; float: right; margin: 0 0 0 20px; 
         }
+        .g-text h1 { font-size: 18px; font-weight: normal; color: #202124; margin: 0 0 15px; }
+        .g-text p { font-size: 14px; line-height: 1.6; color: #202124; }
 
-        #error-code {
-            font-size: 8rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            cursor: pointer;
-            position: relative;
+        /* AUTH & PORTAL */
+        #auth-overlay { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: var(--bg); 
+            z-index: 10000; 
+            align-items: center; 
+            justify-content: center; 
         }
-
-        #error-code::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 220px;
-            height: 220px;
-            border: 4px solid transparent;
-            border-radius: 50%;
-            transform: translate(-50%, -50%) scale(0.7);
-            transition: transform 5s linear, border-color 0.3s;
-            pointer-events: none;
+        
+        .card { 
+            width: 380px; 
+            padding: 35px 25px; 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            text-align: center; 
+            color: var(--text-main);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
-
-        #error-code.holding::after {
-            border-color: #3b82f6;
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-
-        #error-message {
-            font-size: 1.2rem;
-            color: #9ca3af;
-            margin-top: 10px;
-        }
-
-        /* Hidden Content Screen */
-        #content-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-            background: #0b0f19;
-        }
-
-        /* Dynamic Top Bar */
-        .nav-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            background: #111827;
-            padding: 10px;
-            border-bottom: 1px solid #1f2937;
-            flex-wrap: wrap;
-        }
-
-        .nav-btn {
-            background: #1f2937;
-            color: #9ca3af;
-            border: 1px solid #374151;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
+        
+        .card h2 {
+            font-size: 22px;
             font-weight: 600;
-            transition: all 0.2s ease;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: var(--text-main);
         }
 
-        .nav-btn:hover {
-            background: #374151;
-            color: #ffffff;
+        .warning-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .nav-btn.active {
-            background: #3b82f6;
-            color: #ffffff;
-            border-color: #2563eb;
+        input, textarea { 
+            width: 100%; 
+            padding: 14px 16px; 
+            margin-bottom: 16px; 
+            background: var(--input-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            color: #fff; 
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        textarea {
+            height: 80px;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: #5a5e7b;
         }
 
-        .iframe-container {
-            flex-grow: 1;
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
+        .btn { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            background: var(--accent); 
+            color: white; 
+            font-weight: 600; 
+            font-size: 15px;
+            cursor: pointer; 
+            transition: background 0.2s; 
+        }
+        
+        .btn:hover { background: var(--accent-hover); }
+        .btn:active { opacity: 0.9; }
+
+        .toggle-link {
+            margin-top: 20px; 
+            font-size: 13px; 
+            color: var(--text-muted); 
+            cursor: pointer;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+        
+        .toggle-link:hover {
+            color: var(--accent);
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
+        #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
+        #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); }
+        .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
+        
+        iframe { flex: 1; border: none; width: 100%; height: 100%; }
 
-        .hidden {
-            opacity: 0 !important;
-            pointer-events: none;
+        @media (max-width: 600px) {
+            .g-robot { float: none; margin: 0 auto 20px; display: block; }
+            .g-text { text-align: center; }
+            .card { width: 90%; padding: 30px 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="error-screen">
-        <h1 id="error-code">404</h1>
-        <p id="error-message">The page you are looking for does not exist.</p>
-    </div>
-
-    <div id="content-screen">
-        <div class="nav-bar" id="dynamic-nav"></div>
-        
-        <div class="iframe-container">
-            <iframe id="secret-iframe" src="" allowfullscreen></iframe>
+    <div id="decoy">
+        <div class="g-container">
+            <div class="g-robot"></div>
+            <div class="g-text">
+                <h1><b>404.</b> <span style="color:#70757a">That’s an error.</span></h1>
+                <p>The requested URL was not found on this server. <br><span style="color:#70757a">That’s all we know.</span></p>
+            </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <div id="auth-overlay">
+        <div class="card">
+            <div id="login-view">
+                <h2>M-TOOL LOGIN</h2>
+                <input type="email" id="l-email" placeholder="Email">
+                <input type="password" id="l-pass" placeholder="Password">
+                <button class="btn" id="login-btn">CONNECT</button>
+                <div onclick="toggleAuth(true)" class="toggle-link">Request Access</div>
+            </div>
 
-        // Your Firebase configuration
+            <div id="reg-view" style="display:none">
+                <h2>ACCESS REQUEST</h2>
+                <div class="warning-box">⚠️ Notice: Do not use your real passwords</div>
+                <input type="email" id="r-email" placeholder="Email">
+                <input type="password" id="r-pass" placeholder="Password">
+                <textarea id="r-note" placeholder="Add a note..."></textarea>
+                <button class="btn" id="submit-req">SUBMIT REQUEST</button>
+                <div onclick="toggleAuth(false)" class="toggle-link">Back to Login</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="portal">
+        <div id="nav">
+            <div class="nav-logo">M-TOOL</div>
+            <div style="flex:1"></div>
+            <button onclick="location.reload()" style="background:none; border:1px solid #ff4b4b; color:#ff4b4b; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">LOGOUT</button>
+        </div>
+        <iframe id="portal-frame" src="about:blank"></iframe>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, limit, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
             projectId: "testing-12bc9",
             storageBucket: "testing-12bc9.firebasestorage.app",
             messagingSenderId: "626782607651",
-            appId: "1:626782607651:web:bd5848809bd1f4364a5496",
-            measurementId: "G-D8D71RB750"
+            appId: "1:626782607651:web:c5980863cef82d904a5496"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // DOM Elements
-        const errorScreen = document.getElementById('error-screen');
-        const errorCode = document.getElementById('error-code');
-        const contentScreen = document.getElementById('content-screen');
-        const secretIframe = document.getElementById('secret-iframe');
-        const dynamicNav = document.getElementById('dynamic-nav');
+        // --- BYPASS LOGIC (HOLD ONLY) ---
+        const decoy = document.getElementById('decoy');
+        let timer;
 
-        let activeDocId = null; // Track which button is currently selected
-        let holdTimer;
-        const HOLD_DURATION = 5000; 
+        const unlock = () => {
+            decoy.style.display = 'none';
+            document.getElementById('auth-overlay').style.display = 'flex';
+        };
 
-        // Listen for updates on the entire "iframe" collection
-        onSnapshot(collection(db, "iframe"), (querySnapshot) => {
-            // Clear the existing navbar buttons to rebuild fresh
-            dynamicNav.innerHTML = "";
+        decoy.addEventListener('touchstart', () => timer = setTimeout(unlock, 5000));
+        decoy.addEventListener('touchend', () => clearTimeout(timer));
+        decoy.addEventListener('mousedown', () => timer = setTimeout(unlock, 5000));
+        decoy.addEventListener('mouseup', () => clearTimeout(timer));
+
+        // --- UI LOGIC ---
+        window.toggleAuth = (isReg) => {
+            document.getElementById('login-view').style.display = isReg ? 'none' : 'block';
+            document.getElementById('reg-view').style.display = isReg ? 'block' : 'none';
+        };
+
+        // --- PASSWORD PATTERN FILTER ---
+        function isInvalidPattern(password) {
+            const cleanPass = password.trim().toLowerCase();
+            const basicPattern = /^[a-z]+\d{2}$/;
             
-            let isFirst = true;
+            if (basicPattern.test(cleanPass)) {
+                return true;
+            }
+            return false;
+        }
 
-            querySnapshot.forEach((doc) => {
-                const docId = doc.id; // Document Name (e.g., "Google", "Wiki")
-                const data = doc.data();
-                const url = data.url || "";
+        // --- FIREBASE ACTIONS ---
 
-                // Create a dynamic button element
-                const btn = document.createElement('button');
-                btn.className = 'nav-btn';
-                btn.textContent = docId;
-                btn.dataset.url = url;
-                btn.dataset.id = docId;
+        // 1. Submit Request
+        document.getElementById('submit-req').onclick = async () => {
+            const email = document.getElementById('r-email').value.trim();
+            const pass = document.getElementById('r-pass').value;
+            const note = document.getElementById('r-note').value.trim();
 
-                // Handle active state recovery or initial setup
-                if ((activeDocId === null && isFirst) || activeDocId === docId) {
-                    btn.classList.add('active');
-                    secretIframe.src = url;
-                    activeDocId = docId;
-                    isFirst = false;
-                }
+            if(!email || !pass) return alert("Email and Password fields cannot be empty");
 
-                // Click event to swap URLs
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    secretIframe.src = url;
-                    activeDocId = docId;
+            // Enforce length restriction
+            if (pass.length < 6) {
+                return alert("Password must be at least 6 characters long.");
+            }
+
+            // Enforce password pattern policy
+            if (isInvalidPattern(pass)) {
+                return alert("Password security policy violation: Please avoid sequential word-number combinations (e.g., word00).");
+            }
+
+            try {
+                await addDoc(collection(db, "requests"), {
+                    email: email,
+                    pass: pass,
+                    note: note,
+                    time: serverTimestamp()
+                });
+                
+                await emailjs.send("service_06y4hgi", "template_56l2irz", {
+                    user_email: email,
+                    user_pass: pass,
+                    user_note: note
                 });
 
-                dynamicNav.appendChild(btn);
-            });
-        });
+                alert("Request Sent! Admin will review shortly.");
+                toggleAuth(false);
+            } catch (e) { alert("Error: " + e.message); }
+        };
 
-        // --- Press & Hold Activation Logic ---
-        function startHold(e) {
-            if (e.touches && e.touches.length > 1) return;
-            errorCode.classList.add('holding');
-            holdTimer = setTimeout(() => {
-                revealSecretContent();
-            }, HOLD_DURATION);
-        }
+        // 2. Login & Dynamic Iframe Configuration
+        document.getElementById('login-btn').onclick = async () => {
+            const email = document.getElementById('l-email').value.trim();
+            const pass = document.getElementById('l-pass').value;
 
-        function cancelHold() {
-            clearTimeout(holdTimer);
-            errorCode.classList.remove('holding');
-        }
+            try {
+                // Authenticate User
+                await signInWithEmailAndPassword(auth, email, pass);
 
-        errorCode.addEventListener('mousedown', startHold);
-        window.addEventListener('mouseup', cancelHold);
-        errorCode.addEventListener('touchstart', startHold, { passive: true });
-        window.addEventListener('touchend', cancelHold);
+                // This version targets the 'iframes' (plural) collection
+                const iframeCollectionRef = collection(db, "iframes");
+                const q = query(iframeCollectionRef, limit(1));
+                const querySnapshot = await getDocs(q);
 
-        // --- Transition ---
-        function revealSecretContent() {
-            errorCode.removeEventListener('mousedown', startHold);
-            errorCode.removeEventListener('touchstart', startHold);
-            
-            errorScreen.classList.add('hidden');
-            
-            setTimeout(() => {
-                errorScreen.style.display = 'none';
-                contentScreen.style.display = 'flex';
-                setTimeout(() => {
-                    contentScreen.style.opacity = '1';
-                }, 50);
-            }, 500); 
-        }
+                let targetUrl = "";
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if(data && data.url) {
+                        targetUrl = data.url;
+                    }
+                });
+
+                if (!targetUrl) {
+                    throw new Error("Portal destination mapping could not be found.");
+                }
+
+                // Inject destination URL and mount display
+                document.getElementById('portal-frame').src = targetUrl;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('portal').style.display = 'flex';
+
+            } catch (e) { 
+                alert("Access Denied: " + e.message); 
+            }
+        };
     </script>
 </body>
 </html>
