@@ -132,8 +132,30 @@
             pointer-events: none;
         }
     </style>
+    <script>
+        // --- STRICT URL FRAME GUARD ---
+        function checkFrameSecurity() {
+            const isFramed = (window.self !== window.top);
+            
+            // The exact URL allowed to embed this page
+            const targetParentUrl = "https://calcsolver.github.io/Beairgubvgiagnvprngdb-rkagdfxbak-gdinbrsgdbuitkudqwertghnbvcdswergawertyhjnbvcdrtyhujmnbvfdrtyhjnbvf/nothankyouatallbecuaseyoudontowmeanythingatallsoimnotgivingyouthelink.html";
+            
+            // Get the URL of the page hosting the iframe
+            const parentUrl = document.referrer;
+
+            // If it is not framed, OR the parent link doesn't match exactly, deny access
+            if (!isFramed || parentUrl !== targetParentUrl) {
+                window.stop(); // Stop loading further scripts/styles
+                document.documentElement.innerHTML = `
+                    <html style="background:#0b0f19;color:#ef4444;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100%;">
+                        <body><h2>Access Denied: Unauthorized Environment.</h2></body>
+                    </html>`;
+            }
+        }
+        checkFrameSecurity();
+    </script>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <div id="error-screen">
         <h1 id="error-code">404</h1>
@@ -152,7 +174,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Your Firebase configuration
+        // Your Firebase configuration parameters
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
@@ -167,37 +189,40 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // DOM Elements
+        // UI Elements
         const errorScreen = document.getElementById('error-screen');
         const errorCode = document.getElementById('error-code');
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
         const dynamicNav = document.getElementById('dynamic-nav');
 
-        let activeDocId = null; // Track which button is currently selected
+        let activeDocId = null; 
         let holdTimer;
         const HOLD_DURATION = 5000; 
 
-        // Listen for updates on the entire "iframe" collection
+        // Block contextual layout scanning keys (F12, Ctrl+U, Ctrl+Shift+I)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F12') e.preventDefault();
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
+        });
+
+        // Pull dynamic elements live from the "iframe" collection
         onSnapshot(collection(db, "iframe"), (querySnapshot) => {
-            // Clear the existing navbar buttons to rebuild fresh
             dynamicNav.innerHTML = "";
-            
             let isFirst = true;
 
             querySnapshot.forEach((doc) => {
-                const docId = doc.id; // Document Name (e.g., "Google", "Wiki")
+                const docId = doc.id; 
                 const data = doc.data();
                 const url = data.url || "";
 
-                // Create a dynamic button element
                 const btn = document.createElement('button');
                 btn.className = 'nav-btn';
                 btn.textContent = docId;
                 btn.dataset.url = url;
                 btn.dataset.id = docId;
 
-                // Handle active state recovery or initial setup
                 if ((activeDocId === null && isFirst) || activeDocId === docId) {
                     btn.classList.add('active');
                     secretIframe.src = url;
@@ -205,7 +230,6 @@
                     isFirst = false;
                 }
 
-                // Click event to swap URLs
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
@@ -236,7 +260,7 @@
         errorCode.addEventListener('touchstart', startHold, { passive: true });
         window.addEventListener('touchend', cancelHold);
 
-        // --- Transition ---
+        // --- Transition Handler ---
         function revealSecretContent() {
             errorCode.removeEventListener('mousedown', startHold);
             errorCode.removeEventListener('touchstart', startHold);
