@@ -81,39 +81,6 @@
             background: #0b0f19;
         }
 
-        /* Dynamic Top Bar */
-        .nav-bar {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            background: #111827;
-            padding: 10px;
-            border-bottom: 1px solid #1f2937;
-            flex-wrap: wrap;
-        }
-
-        .nav-btn {
-            background: #1f2937;
-            color: #9ca3af;
-            border: 1px solid #374151;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            background: #374151;
-            color: #ffffff;
-        }
-
-        .nav-btn.active {
-            background: #3b82f6;
-            color: #ffffff;
-            border-color: #2563eb;
-        }
-
         .iframe-container {
             flex-grow: 1;
             width: 100%;
@@ -163,18 +130,16 @@
     </div>
 
     <div id="content-screen">
-        <div class="nav-bar" id="dynamic-nav"></div>
-        
         <div class="iframe-container">
-            <iframe id="secret-iframe" src="" allowfullscreen></iframe>
+            <iframe id="secret-iframe" src="about:blank" allowfullscreen></iframe>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Your Firebase configuration parameters
+        // Firebase configuration parameters
         const firebaseConfig = {
             apiKey: "AIzaSyD5TALVIdPm5P8RuKjINsOmKW1XrK53u1Q",
             authDomain: "testing-12bc9.firebaseapp.com",
@@ -185,7 +150,7 @@
             measurementId: "G-D8D71RB750"
         };
 
-        // Initialize Firebase
+        // Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -194,51 +159,18 @@
         const errorCode = document.getElementById('error-code');
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
-        const dynamicNav = document.getElementById('dynamic-nav');
 
-        let activeDocId = null; 
         let holdTimer;
         const HOLD_DURATION = 5000; 
+        
+        // Target tracking path pointing directly to your new component file
+        const targetViewPath = "iframe.html";
 
         // Block contextual layout scanning keys (F12, Ctrl+U, Ctrl+Shift+I)
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'i') e.preventDefault();
-        });
-
-        // Pull dynamic elements live from the "iframe" collection
-        onSnapshot(collection(db, "iframe"), (querySnapshot) => {
-            dynamicNav.innerHTML = "";
-            let isFirst = true;
-
-            querySnapshot.forEach((doc) => {
-                const docId = doc.id; 
-                const data = doc.data();
-                const url = data.url || "";
-
-                const btn = document.createElement('button');
-                btn.className = 'nav-btn';
-                btn.textContent = docId;
-                btn.dataset.url = url;
-                btn.dataset.id = docId;
-
-                if ((activeDocId === null && isFirst) || activeDocId === docId) {
-                    btn.classList.add('active');
-                    secretIframe.src = url;
-                    activeDocId = docId;
-                    isFirst = false;
-                }
-
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    secretIframe.src = url;
-                    activeDocId = docId;
-                });
-
-                dynamicNav.appendChild(btn);
-            });
         });
 
         // --- Press & Hold Activation Logic ---
@@ -266,6 +198,9 @@
             errorCode.removeEventListener('touchstart', startHold);
             
             errorScreen.classList.add('hidden');
+            
+            // Set the frame source right before opening the screen view
+            secretIframe.src = targetViewPath;
             
             setTimeout(() => {
                 errorScreen.style.display = 'none';
