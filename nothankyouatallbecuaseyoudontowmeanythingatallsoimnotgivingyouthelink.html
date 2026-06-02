@@ -34,7 +34,7 @@
             position: fixed; inset: 0; background: #fff; z-index: 9999; 
             display: flex; align-items: center; justify-content: center; 
             padding: 20px; cursor: default; user-select: none; 
-            -webkit-user-select: none; touch-action: none; 
+            -webkit-user-select: none;
         }
         .g-container { max-width: 650px; width: 100%; pointer-events: none; }
         .g-robot { 
@@ -143,8 +143,36 @@
         }
 
         #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
-        #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); }
+        #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); gap: 12px; }
         .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
+        
+        .nav-action-btn {
+            background: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 13px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+        
+        #refresh-btn {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        #refresh-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        #logout-btn {
+            border: 1px solid #ff4b4b;
+            color: #ff4b4b;
+        }
+        #logout-btn:hover {
+            background: #ff4b4b;
+            color: #fff;
+        }
         
         iframe { flex: 1; border: none; width: 100%; height: 100%; }
 
@@ -193,7 +221,8 @@
         <div id="nav">
             <div class="nav-logo">M-TOOL</div>
             <div style="flex:1"></div>
-            <button onclick="location.reload()" style="background:none; border:1px solid #ff4b4b; color:#ff4b4b; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600; font-size:13px;">LOGOUT</button>
+            <button id="refresh-btn" class="nav-action-btn">REFRESH IFRAME</button>
+            <button id="logout-btn" class="nav-action-btn" onclick="location.reload()">LOGOUT</button>
         </div>
         <iframe id="portal-frame" src="about:blank"></iframe>
     </div>
@@ -216,21 +245,39 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- BYPASS LOGIC (HOLD ONLY) ---
+        // --- BYPASS LOGIC (3-FINGER 7-SECOND TOUCH HOLD) ---
         const decoy = document.getElementById('decoy');
-        let timer;
+        let holdTimer;
+        const TARGET_FINGERS = 3;
+        const HOLD_DURATION = 7000; // 7 seconds
 
-        const unlock = () => {
+        const unlockGateway = () => {
             decoy.style.display = 'none';
             document.getElementById('auth-overlay').style.display = 'flex';
         };
 
-        decoy.addEventListener('touchstart', () => timer = setTimeout(unlock, 5000));
-        decoy.addEventListener('touchend', () => clearTimeout(timer));
-        decoy.addEventListener('mousedown', () => timer = setTimeout(unlock, 5000));
-        decoy.addEventListener('mouseup', () => clearTimeout(timer));
+        // Touchscreen Handler (3 Fingers)
+        decoy.addEventListener('touchstart', (e) => {
+            if (e.touches.length === TARGET_FINGERS) {
+                holdTimer = setTimeout(unlockGateway, HOLD_DURATION);
+            } else {
+                clearTimeout(holdTimer);
+            }
+        }, { passive: true });
 
-        // --- UI LOGIC ---
+        decoy.addEventListener('touchend', () => {
+            clearTimeout(holdTimer);
+        });
+
+        // Desktop Fallback (Allows standard long-click for building/debugging via desktop mouse)
+        decoy.addEventListener('mousedown', (e) => {
+            holdTimer = setTimeout(unlockGateway, HOLD_DURATION);
+        });
+        decoy.addEventListener('mouseup', () => {
+            clearTimeout(holdTimer);
+        });
+
+        // --- UI TOGGLING ---
         window.toggleAuth = (isReg) => {
             document.getElementById('login-view').style.display = isReg ? 'none' : 'block';
             document.getElementById('reg-view').style.display = isReg ? 'block' : 'none';
@@ -251,10 +298,10 @@
             const pass = document.getElementById('r-pass').value;
             const note = document.getElementById('r-note').value.trim();
 
-            if(!email || !pass) return alert("Email and Password fields cannot be empty");
-            if (pass.length < 6) return alert("Password must be at least 6 characters long.");
+            if(!email || !pass) return alert("Fields cannot be empty.");
+            if (pass.length < 6) return alert("Password must be at least 6 characters.");
             if (isInvalidPattern(pass)) {
-                return alert("Password security policy violation: Please avoid sequential word-number combinations (e.g., word00).");
+                return alert("Security policy error: Avoid simple word-number paths.");
             }
 
             try {
@@ -271,43 +318,56 @@
                     user_note: note
                 });
 
-                alert("Request Sent! Admin will review shortly.");
+                alert("Request Sent!");
                 toggleAuth(false);
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        // 2. Login & Direct Document Fetch Configuration
+        // Global cache to let the reload action fetch without running extra reads
+        let authenticatedUrlCache = "";
+
+        // 2. Connect Button Action
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('l-email').value.trim();
             const pass = document.getElementById('l-pass').value;
 
             try {
-                // Authenticate User
                 await signInWithEmailAndPassword(auth, email, pass);
 
-                // Fixed: Matches the singular collection "iframe" and calls the target ID directly
+                // Hits singular matching collection precisely
                 const docRef = doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV");
                 const docSnap = await getDoc(docRef);
 
-                let targetUrl = "";
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     if (data && data.url) {
-                        targetUrl = data.url;
+                        authenticatedUrlCache = data.url;
                     }
                 }
 
-                if (!targetUrl) {
-                    throw new Error("Portal destination mapping could not be found.");
+                if (!authenticatedUrlCache) {
+                    throw new Error("Portal destination missing or blocked by current project rules.");
                 }
 
-                // Inject destination URL and mount display
-                document.getElementById('portal-frame').src = targetUrl;
+                // Load destination frame and map layout view
+                document.getElementById('portal-frame').src = authenticatedUrlCache;
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('portal').style.display = 'flex';
 
             } catch (e) { 
                 alert("Access Denied: " + e.message); 
+            }
+        };
+
+        // --- DYNAMIC REFRESH BUTTON ACTION ---
+        document.getElementById('refresh-btn').onclick = () => {
+            const frame = document.getElementById('portal-frame');
+            if (authenticatedUrlCache) {
+                // Hard resets iframe content view targeting your resource URL
+                frame.src = "about:blank";
+                setTimeout(() => {
+                    frame.src = authenticatedUrlCache;
+                }, 100);
             }
         };
     </script>
