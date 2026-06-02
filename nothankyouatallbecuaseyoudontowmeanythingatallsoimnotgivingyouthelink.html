@@ -149,7 +149,7 @@
             min-height: 20px;
         }
 
-        /* Hidden Content Screen */
+        /* Hidden Content Screen with Tabbed UI */
         #content-screen {
             position: absolute;
             top: 0;
@@ -159,6 +159,38 @@
             display: none;
             flex-direction: column;
             background: #0b0f19;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            background: #111827;
+            padding: 10px;
+            border-bottom: 1px solid #1f2937;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #1f2937;
+            color: #9ca3af;
+            border: 1px solid #374151;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: #374151;
+            color: #ffffff;
+        }
+
+        .nav-btn.active {
+            background: #3b82f6;
+            color: #ffffff;
+            border-color: #2563eb;
         }
 
         .iframe-container {
@@ -203,6 +235,9 @@
     </div>
 
     <div id="content-screen">
+        <div class="nav-bar" id="dynamic-nav">
+            <button class="nav-btn active" id="primary-tab">Console Display</button>
+        </div>
         <div class="iframe-container">
             <iframe id="secret-iframe" src="" allowfullscreen></iframe>
         </div>
@@ -235,6 +270,7 @@
         const authScreen = document.getElementById('auth-screen');
         const contentScreen = document.getElementById('content-screen');
         const secretIframe = document.getElementById('secret-iframe');
+        const primaryTab = document.getElementById('primary-tab');
         
         const authSubmitBtn = document.getElementById('auth-submit-btn');
         const authToggleBtn = document.getElementById('auth-toggle-btn');
@@ -246,9 +282,9 @@
         let holdTimer;
         const HOLD_DURATION = 5000; 
         let unsubscribeDoc = null; 
-        let isLoginMode = true; // State tracking for Sign In vs Sign Up
+        let isLoginMode = true; 
 
-        // Prevent environment scanning inspection shortcuts
+        // Prevent layout inspection shortcuts
         window.addEventListener('keydown', (e) => {
             if (e.key === 'F12') e.preventDefault();
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') e.preventDefault();
@@ -277,12 +313,14 @@
                 errorScreen.style.display = 'none';
                 contentScreen.style.display = 'flex';
 
-                // Establish clean read pipeline to exact document ID
+                // Establish clean read pipeline to your designated document ID
                 unsubscribeDoc = onSnapshot(doc(db, "iframe", "Lu7ku0kzfjMiRLymjhrV"), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         if (data.url && secretIframe.src !== data.url) {
                             secretIframe.src = data.url;
+                            // Optionally set the tab text to match the document name if preferred
+                            primaryTab.textContent = docSnap.id;
                         }
                     }
                 }, (error) => {
