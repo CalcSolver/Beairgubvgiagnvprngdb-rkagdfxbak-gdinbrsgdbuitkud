@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workspace Console</title>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --border-color: #1f2937;
+            --text-active: #ffffff;
+            --text-inactive: #9ca3af;
+            --accent-color: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-active);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navigation Bar */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-secondary);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .nav-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--accent-color);
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .tabs-wrapper {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: #1f2937;
+            color: var(--text-inactive);
+            border: 1px solid #374151;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .nav-btn:hover {
+            background: #374151;
+            color: var(--text-active);
+        }
+
+        .nav-btn.active {
+            background: var(--accent-color);
+            color: var(--text-active);
+            border-color: #2563eb;
+        }
+
+        /* Viewport Container */
+        .viewport-container {
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+            background: #ffffff;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+
+        /* Customizable Fallback Message Notice */
+        .fallback-notice {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: #0f172a;
+            color: #94a3b8;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .fallback-notice p {
+            max-width: 500px;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .open-link-btn {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .open-link-btn:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <span class="nav-title">PORTAL</span>
+        <div class="tabs-wrapper" id="navigation-tabs"></div>
+    </div>
+    
+    <div class="viewport-container">
+        
+        <div class="fallback-notice">
+            <p id="if these links dont work copy and paste them into one of the unblcokers and tell me">
+                If the content does not load, it may be restricted by the host server's security configurations. You can customize this paragraph text directly inside the HTML file to match your project requirements.
+            </p>
+            <a id="direct-link" href="#" target="_blank" class="open-link-btn">Open Link Directly</a>
+        </div>
+
+        <iframe id="main-viewport" src="about:blank" allowfullscreen></iframe>
+    </div>
+
+    <script type="module">
+        // List of URLs mapped with easy-to-read labels
+        const externalTargets = [
+            { label: "Server 1", url: "https://anotheroneasdjkhaledwouldsay.b-cdn.net/" },
+            { label: "Server 2", url: "https://bringoutthelobster.b-cdn.net/" },
+            { label: "Server 3", url: "https://relic-is.best.sismonda.com.ar/" },
+            { label: "Education Portal", url: "https://education.fun-school.globalgeocad.ro/" },
+            { label: "Sonic & Mario", url: "https://www.fanfreegames.com/g/sonic-super-mario-world" },
+            { label: "Wii Index", url: "https://raw.githack.com/CalcSolver/Wii/main/index.html" },
+            { label: "Itch Engine", url: "https://html-classic.itch.zone/html/9737734/index.html?v=1732313593" }
+        ];
+
+        const tabsContainer = document.getElementById('navigation-tabs');
+        const viewport = document.getElementById('main-viewport');
+        const directLink = document.getElementById('direct-link');
+
+        /**
+         * Switches the primary iframe display URL
+         */
+        function loadUrl(targetUrl, activeElement) {
+            if (!targetUrl) return;
+            
+            // Set iframe source
+            viewport.src = targetUrl;
+            
+            // Update the direct link fallback action button
+            directLink.href = targetUrl;
+
+            // Manage CSS active button selectors
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeElement.classList.add('active');
+        }
+
+        /**
+         * Builds buttons dynamically from data mapping
+         */
+        function setupNavigation() {
+            externalTargets.forEach((target, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.textContent = target.label;
+                
+                btn.addEventListener('click', () => {
+                    loadUrl(target.url, btn);
+                });
+
+                tabsContainer.appendChild(btn);
+
+                // Default initial landing target setup
+                if (index === 0) {
+                    loadUrl(target.url, btn);
+                }
+            });
+        }
+
+        // Run Setup Initialization
+        setupNavigation();
+    </script>
+</body>
+</html>
