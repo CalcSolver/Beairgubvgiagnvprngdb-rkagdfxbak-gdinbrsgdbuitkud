@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>404 Not Found</title>
+    <title>Console Gateway</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -27,26 +27,11 @@
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { background: #fff; color: #222; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg); color: #fff; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* DECOY 404 THEME */
-        #decoy { 
-            position: fixed; inset: 0; background: #fff; z-index: 9999; 
-            display: flex; align-items: center; justify-content: center; 
-            padding: 20px; cursor: default; user-select: none; 
-            -webkit-user-select: none;
-        }
-        .g-container { max-width: 650px; width: 100%; pointer-events: none; }
-        .g-robot { 
-            background: url('https://www.google.com/images/errors/robot.png') no-repeat; 
-            width: 256px; height: 256px; float: right; margin: 0 0 0 20px; 
-        }
-        .g-text h1 { font-size: 18px; font-weight: normal; color: #202124; margin: 0 0 15px; }
-        .g-text p { font-size: 14px; line-height: 1.6; color: #202124; }
-
-        /* AUTH & PORTAL */
+        /* AUTHENTICATION GATEWAY INNER ALIGNMENT */
         #auth-overlay { 
-            display: none; 
+            display: flex; 
             position: fixed; 
             inset: 0; 
             background: var(--bg); 
@@ -142,6 +127,7 @@
             color: var(--accent);
         }
 
+        /* ENVIRONMENT RENDERING PLATFORM */
         #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
         #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); gap: 12px; }
         .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
@@ -177,23 +163,11 @@
         iframe { flex: 1; border: none; width: 100%; height: 100%; }
 
         @media (max-width: 600px) {
-            .g-robot { float: none; margin: 0 auto 20px; display: block; }
-            .g-text { text-align: center; }
             .card { width: 90%; padding: 30px 20px; }
         }
     </style>
 </head>
 <body>
-
-    <div id="decoy">
-        <div class="g-container">
-            <div class="g-robot"></div>
-            <div class="g-text">
-                <h1><b>404.</b> <span style="color:#70757a">That’s an error.</span></h1>
-                <p>The requested URL was not found on this server. <br><span style="color:#70757a">That’s all we know.</span></p>
-            </div>
-        </div>
-    </div>
 
     <div id="auth-overlay">
         <div class="card">
@@ -224,7 +198,7 @@
             <button id="refresh-btn" class="nav-action-btn">REFRESH IFRAME</button>
             <button id="logout-btn" class="nav-action-btn" onclick="location.reload()">LOGOUT</button>
         </div>
-        <iframe id="portal-frame" src="about:blank"></iframe>
+        <iframe id="portal-frame" src="about:blank" allowfullscreen></iframe>
     </div>
 
     <script type="module">
@@ -245,54 +219,23 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- BYPASS LOGIC (3-FINGER 7-SECOND TOUCH HOLD) ---
-        const decoy = document.getElementById('decoy');
-        let holdTimer;
-        const TARGET_FINGERS = 3;
-        const HOLD_DURATION = 7000; 
+        // Target path routing to the multi-link console
+        const authenticatedUrlCache = "iframe.html";
 
-        const unlockGateway = () => {
-            decoy.style.display = 'none';
-            document.getElementById('auth-overlay').style.display = 'flex';
-        };
-
-        // Touch Tracking
-        decoy.addEventListener('touchstart', (e) => {
-            if (e.touches.length === TARGET_FINGERS) {
-                holdTimer = setTimeout(unlockGateway, HOLD_DURATION);
-            } else {
-                clearTimeout(holdTimer);
-            }
-        }, { passive: true });
-
-        decoy.addEventListener('touchend', () => {
-            clearTimeout(holdTimer);
-        });
-
-        // Mouse Fallback 
-        decoy.addEventListener('mousedown', () => {
-            holdTimer = setTimeout(unlockGateway, HOLD_DURATION);
-        });
-        decoy.addEventListener('mouseup', () => {
-            clearTimeout(holdTimer);
-        });
-
-        // --- UI TOGGLING ---
+        // --- UI VIEW TOGGLING ---
         window.toggleAuth = (isReg) => {
             document.getElementById('login-view').style.display = isReg ? 'none' : 'block';
             document.getElementById('reg-view').style.display = isReg ? 'block' : 'none';
         };
 
-        // --- PASSWORD FILTER ---
+        // --- PASSWORD CRITERIA FILTER ---
         function isInvalidPattern(password) {
             const cleanPass = password.trim().toLowerCase();
             const basicPattern = /^[a-z]+\d{2}$/;
             return basicPattern.test(cleanPass);
         }
 
-        // --- FIREBASE ACTIONS ---
-
-        // 1. Request Access Ingestion
+        // --- SIGN-UP REGISTRATION ROUTINE ---
         document.getElementById('submit-req').onclick = async () => {
             const email = document.getElementById('r-email').value.trim();
             const pass = document.getElementById('r-pass').value;
@@ -301,7 +244,7 @@
             if(!email || !pass) return alert("Fields cannot be empty.");
             if (pass.length < 6) return alert("Password must be at least 6 characters.");
             if (isInvalidPattern(pass)) {
-                return alert("Security policy error: Avoid simple sequential word-number rules.");
+                return alert("Security policy error: Avoid simple sequential character strings.");
             }
 
             try {
@@ -323,19 +266,19 @@
             } catch (e) { alert("Error: " + e.message); }
         };
 
-        // Local tracking string for internal repository route mapping
-        const authenticatedUrlCache = "newholyfilesnotforindeivualusesuccesscriteainculedidkbcimnotadevelpoerhigrokchatgptgooglegemniandmorelikecluadeandothersaswell.html";
-
-        // 2. Connect Session Authenticator
+        // --- AUTHENTICATED REDIRECTION PROCESS ---
         document.getElementById('login-btn').onclick = async () => {
             const email = document.getElementById('l-email').value.trim();
             const pass = document.getElementById('l-pass').value;
 
             try {
+                // Perform standard Firebase authentication check
                 await signInWithEmailAndPassword(auth, email, pass);
 
-                // Set iframe directly to local relative path
+                // Load the local workspace interface file into the single frame container directly
                 document.getElementById('portal-frame').src = authenticatedUrlCache;
+                
+                // Swap layout containers
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('portal').style.display = 'flex';
 
@@ -344,7 +287,7 @@
             }
         };
 
-        // --- DYNAMIC REFRESH BUTTON ACTION ---
+        // --- CONTROLPANEL REFRESH BUTTON TRIGGER ---
         document.getElementById('refresh-btn').onclick = () => {
             const frame = document.getElementById('portal-frame');
             frame.src = "about:blank";
