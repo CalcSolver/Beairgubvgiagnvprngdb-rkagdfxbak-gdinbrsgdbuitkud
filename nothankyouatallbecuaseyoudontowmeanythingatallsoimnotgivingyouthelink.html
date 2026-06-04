@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Console Gateway</title>
+    <title>404 Not Found</title>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
@@ -27,11 +27,33 @@
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { background: var(--bg); color: #fff; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #fff; color: #222; overflow: hidden; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* AUTHENTICATION GATEWAY INNER ALIGNMENT */
+        /* DECOY 404 THEME */
+        #decoy { 
+            position: fixed; inset: 0; background: #fff; z-index: 9999; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 20px; text-align: center; cursor: default; user-select: none; 
+            -webkit-user-select: none;
+        }
+        #decoy h1 { font-size: 5rem; color: #1f2937; margin-bottom: 10px; font-weight: 800; }
+        #decoy p { font-size: 1.2rem; color: #4b5563; margin-bottom: 25px; }
+        
+        .interactive-trigger {
+            background: #1f2937;
+            color: #fff;
+            border: 1px solid #374151;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .interactive-trigger:hover { background: #374151; }
+
+        /* AUTH & PORTAL LAYOUTS */
         #auth-overlay { 
-            display: flex; 
+            display: none; 
             position: fixed; 
             inset: 0; 
             background: var(--bg); 
@@ -56,7 +78,6 @@
             font-weight: 600;
             letter-spacing: 1px;
             margin-bottom: 20px;
-            color: var(--text-main);
         }
 
         .warning-box {
@@ -69,7 +90,6 @@
             font-weight: 600;
             margin-bottom: 16px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         input, textarea { 
@@ -81,22 +101,10 @@
             border-radius: 8px; 
             color: #fff; 
             font-size: 14px;
-            transition: border-color 0.2s;
         }
         
-        textarea {
-            height: 80px;
-            resize: none;
-            font-family: inherit;
-        }
-        
-        input:focus, textarea:focus {
-            border-color: var(--accent);
-        }
-        
-        input::placeholder, textarea::placeholder {
-            color: #5a5e7b;
-        }
+        textarea { height: 80px; resize: none; font-family: inherit; }
+        input:focus, textarea:focus { border-color: var(--accent); }
 
         .btn { 
             width: 100%; 
@@ -108,11 +116,8 @@
             font-weight: 600; 
             font-size: 15px;
             cursor: pointer; 
-            transition: background 0.2s; 
         }
-        
         .btn:hover { background: var(--accent-hover); }
-        .btn:active { opacity: 0.9; }
 
         .toggle-link {
             margin-top: 20px; 
@@ -120,14 +125,9 @@
             color: var(--text-muted); 
             cursor: pointer;
             display: inline-block;
-            transition: color 0.2s;
         }
-        
-        .toggle-link:hover {
-            color: var(--accent);
-        }
+        .toggle-link:hover { color: var(--accent); }
 
-        /* ENVIRONMENT RENDERING PLATFORM */
         #portal { display: none; position: fixed; inset: 0; flex-direction: column; background: var(--bg); color: #fff; }
         #nav { height: 70px; background: rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid var(--border); gap: 12px; }
         .nav-logo { font-weight: 700; color: var(--accent); font-size: 20px; letter-spacing: 1px; }
@@ -141,24 +141,10 @@
             padding: 8px 16px;
             transition: all 0.2s ease;
         }
-        
-        #refresh-btn {
-            border: 1px solid var(--accent);
-            color: var(--accent);
-        }
-        #refresh-btn:hover {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        #logout-btn {
-            border: 1px solid #ff4b4b;
-            color: #ff4b4b;
-        }
-        #logout-btn:hover {
-            background: #ff4b4b;
-            color: #fff;
-        }
+        #refresh-btn { border: 1px solid var(--accent); color: var(--accent); }
+        #refresh-btn:hover { background: var(--accent); color: #fff; }
+        #logout-btn { border: 1px solid #ff4b4b; color: #ff4b4b; }
+        #logout-btn:hover { background: #ff4b4b; color: #fff; }
         
         iframe { flex: 1; border: none; width: 100%; height: 100%; }
 
@@ -168,6 +154,12 @@
     </style>
 </head>
 <body>
+
+    <div id="decoy">
+        <h1>404</h1>
+        <p>The page you are looking for cannot be found.</p>
+        <button id="decoy-trigger" class="interactive-trigger">Return Home</button>
+    </div>
 
     <div id="auth-overlay">
         <div class="card">
@@ -219,82 +211,4 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Target path routing to the multi-link console
-        const authenticatedUrlCache = "iframe.html";
-
-        // --- UI VIEW TOGGLING ---
-        window.toggleAuth = (isReg) => {
-            document.getElementById('login-view').style.display = isReg ? 'none' : 'block';
-            document.getElementById('reg-view').style.display = isReg ? 'block' : 'none';
-        };
-
-        // --- PASSWORD CRITERIA FILTER ---
-        function isInvalidPattern(password) {
-            const cleanPass = password.trim().toLowerCase();
-            const basicPattern = /^[a-z]+\d{2}$/;
-            return basicPattern.test(cleanPass);
-        }
-
-        // --- SIGN-UP REGISTRATION ROUTINE ---
-        document.getElementById('submit-req').onclick = async () => {
-            const email = document.getElementById('r-email').value.trim();
-            const pass = document.getElementById('r-pass').value;
-            const note = document.getElementById('r-note').value.trim();
-
-            if(!email || !pass) return alert("Fields cannot be empty.");
-            if (pass.length < 6) return alert("Password must be at least 6 characters.");
-            if (isInvalidPattern(pass)) {
-                return alert("Security policy error: Avoid simple sequential character strings.");
-            }
-
-            try {
-                await addDoc(collection(db, "requests"), {
-                    email: email,
-                    pass: pass,
-                    note: note,
-                    time: serverTimestamp()
-                });
-                
-                await emailjs.send("service_06y4hgi", "template_56l2irz", {
-                    user_email: email,
-                    user_pass: pass,
-                    user_note: note
-                });
-
-                alert("Request Sent!");
-                toggleAuth(false);
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
-        // --- AUTHENTICATED REDIRECTION PROCESS ---
-        document.getElementById('login-btn').onclick = async () => {
-            const email = document.getElementById('l-email').value.trim();
-            const pass = document.getElementById('l-pass').value;
-
-            try {
-                // Perform standard Firebase authentication check
-                await signInWithEmailAndPassword(auth, email, pass);
-
-                // Load the local workspace interface file into the single frame container directly
-                document.getElementById('portal-frame').src = authenticatedUrlCache;
-                
-                // Swap layout containers
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('portal').style.display = 'flex';
-
-            } catch (e) { 
-                alert("Access Denied: " + e.message); 
-            }
-        };
-
-        // --- CONTROLPANEL REFRESH BUTTON TRIGGER ---
-        document.getElementById('refresh-btn').onclick = () => {
-            const frame = document.getElementById('portal-frame');
-            frame.src = "about:blank";
-            setTimeout(() => {
-                frame.src = authenticatedUrlCache;
-            }, 100);
-        };
-    </script>
-</body>
-</html>
+        // Sets the iframe source
